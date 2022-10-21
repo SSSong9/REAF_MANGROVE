@@ -1,6 +1,6 @@
 ```{r}
 setwd("[please change it into your own path]") 
-# Please change it to your own path, where file 'Supplementary Data.csv', 'EEZ_mangroveloss_final.csv',  'Supplementary Data of Fig. S6.csv' and 'implement cost.csv' exist.
+# Please change it to your own path, where file 'Supplementary Data.csv', 'EEZ_mangroveloss_final.csv',  'Supplementary Data of Fig. S9.csv', 'implement cost.csv' and 'carbonprice.csv' exist.
 ```
 
 ```{r}
@@ -15,6 +15,12 @@ library("ggrepel")
 library("ggalluvial")
 library("reshape2")
 library("introdataviz")
+library("multcompView")
+library("car")
+library("FSA")
+library("rcompanion")
+library("nlraa")
+library("agricolae")
 ```
 
 
@@ -31,7 +37,7 @@ data=data%>%
 colnames(data)[c(19:24,26,28:33,35)]
 
 colnames(data)[c(19:24,26,28:33,35)]=c("BC_mean","ABC_mean","BBC_mean",
-                                    "SCS_mean","SCS_mean_100","SCS_increase_all","CAR_SFT",
+                                    "SCS_mean","SCS_mean_100","SCS_increase_all",
                                        "SC_mean","TECS_mean",
                                        "salinity_pore",
                                        "sand","silt","clay",
@@ -335,10 +341,8 @@ ggarrange(p8,labels = c("a"),
           heights = c(1.5,3.5))
 
 ggsave(path = "[please change it into your own path]", 
-       # Please change it into your own path
        filename="Fig.1.png",
        width = 178, height = 184, units = "mm")
-
 ```
 
 
@@ -446,6 +450,17 @@ TECS_select_mean = TECS_select %>%
 meansd=rbind(ABC_select_mean,BBC_select_mean,SCS_select_mean,TECS_select_mean)
 write.csv(meansd,"mean_sd_group.csv")
 
+### test of normality and homogeneity of model residuals
+ano=aov(ABC_mean~re_af,data=ABC_select)
+plot(ano,1)
+leveneTest(ABC_mean~re_af,data=ABC_select)
+
+# normality of residuals
+plot(ano, 2)
+aov_residuals <- residuals(object = ano)
+shapiro.test(x = aov_residuals)
+
+## Plot
 mytheme=theme_bw()+
   theme(axis.text = element_text(family = "Helvetica",size=7),
   axis.text.x=element_text(face="plain",family = "Helvetica",size=7), 
@@ -473,7 +488,11 @@ P1=ggplot(ABC_select,aes(x=timegroup,y=ABC_mean,color=re_af))+
   # geom_point(position=position_jitterdodge())+
   stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=1.5,
                    position = position_dodge(width = 0.75))+
-  stat_compare_means(size=3,aes(label = ..p.signif..),label.y = 305,hide.ns = TRUE,show.legend = F)+
+  stat_compare_means(size=2,aes(label = ..p.signif..),label.y = 305,hide.ns = TRUE,show.legend = F,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
   scale_color_manual(values = c("reforestation"="#326232","afforestation"="#45DA54"))+
   stat_summary(fun.y=mean, geom="point", shape=1, size=1, aes(color=re_af),
              position = position_dodge2(width = 0.75,
@@ -492,7 +511,11 @@ P2=ggplot(BBC_select,aes(x=timegroup,y=BBC_mean,color=re_af))+
   geom_boxplot(outlier.alpha = 0.2,outlier.size = 0.5,lwd=0.3)+
   stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=1.5,
                    position = position_dodge(width = 0.75))+
-  stat_compare_means(size=3,aes(label = ..p.signif..),label.y = 100,hide.ns = TRUE,show.legend = F)+
+  stat_compare_means(size=2,aes(label = ..p.signif..),label.y = 100,hide.ns = TRUE,show.legend = F,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
   scale_color_manual(values = c("reforestation"="#09386C","afforestation"="#70ABEB"))+
   stat_summary(fun.y=mean, geom="point", shape=1, size=1, aes(color=re_af),
              position = position_dodge2(width = 0.75,
@@ -510,7 +533,11 @@ P3=ggplot(SCS_select,aes(x=timegroup,y=SCS_mean_100,color=re_af))+
   geom_boxplot(outlier.alpha = 0.2,outlier.size = 0.5,lwd=0.3)+
   stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=1.5,
                    position = position_dodge(width = 0.75))+
-  stat_compare_means(size=3,aes(label = ..p.signif..),label.y = 480,hide.ns = TRUE,show.legend = F)+
+  stat_compare_means(size=2,aes(label = ..p.signif..),label.y = 480,hide.ns = TRUE,show.legend = F,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
   scale_color_manual(values = c("reforestation"="#B8860B","afforestation"="#F3D33A"))+
     stat_summary(fun.y=mean, geom="point", shape=1, size=1, aes(color=re_af),
              position = position_dodge2(width = 0.75,
@@ -529,7 +556,11 @@ P4=ggplot(TECS_select,aes(x=timegroup,y=TECS_mean,color=re_af))+
   geom_boxplot(outlier.alpha = 0.2,outlier.size = 0.5,lwd=0.3)+
   stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=1.5,
                    position = position_dodge(width = 0.75))+
-  stat_compare_means(size=3,aes(label = ..p.signif..),label.y = 510,hide.ns = TRUE,show.legend = F)+
+  stat_compare_means(size=2,aes(label = ..p.signif..),label.y = 510,hide.ns = TRUE,show.legend = F,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
   scale_color_manual(values = c("reforestation"="#AD3818","afforestation"="#FCB29E"))+
   stat_summary(fun.y=mean, geom="point", shape=1, size=1, aes(color=re_af),
              position = position_dodge2(width = 0.75,
@@ -546,10 +577,10 @@ P4=ggplot(TECS_select,aes(x=timegroup,y=TECS_mean,color=re_af))+
 ggarrange(P1,P2,P3,P4, ncol = 2, nrow =2 ,labels="auto",heights=c(1,1.05),font.label=list(face="plain",family = "Helvetica",size=7,face="bold"),
              legend ="bottom",common.legend = T)
 
-ggsave(path = "[please change it into your own path]",
-       # change it into your own path
+ggsave(path=c("[please change it into your own path]"),
        filename="Fig.2.png",
        width = 180, height = 120, units = "mm",dpi=300)
+
 ```
 
 
@@ -608,6 +639,187 @@ AIC(fm4,fm4_1)
 ```
 
 ```{r}
+### Fig. S10 ##
+ABC_re=ABC_select%>%filter(re_af=="reforestation")%>%
+  filter(LULCC_before!="former mangrove site")%>%filter(Age>15)
+BBC_re=BBC_select%>%filter(re_af=="reforestation")%>%
+  filter(LULCC_before!="former mangrove site")%>%filter(Age>15)
+SCS_re=SCS_select%>%filter(re_af=="reforestation")%>%
+  filter(LULCC_before!="former mangrove site")%>%filter(Age>15)
+TECS_re=TECS_select%>%filter(re_af=="reforestation")%>%
+  filter(LULCC_before!="former mangrove site")%>%filter(Age>15)
+
+
+ABC_re$LULCC_before=factor(ABC_re$LULCC_before,
+                           levels=c("abandoned agricultural/aquacultural site",
+                                    "clearing-cut site","site with mangrove mortality"))
+BBC_re$LULCC_before=factor(BBC_re$LULCC_before,
+                           levels=c("abandoned agricultural/aquacultural site",
+                                    "clearing-cut site","site with mangrove mortality"))
+SCS_re$LULCC_before=factor(SCS_re$LULCC_before,
+                           levels=c("abandoned agricultural/aquacultural site",
+                                    "clearing-cut site","site with mangrove mortality"))
+
+
+# function for number of observations 
+give.n <- function(x){
+  return(data.frame(y = -1, label =  paste('n =', length(x))))
+  # experiment with the multiplier to find the perfect position
+}
+
+
+P1=ggboxplot(ABC_re,x="LULCC_before",y="ABC_mean",
+          color = "LULCC_before", 
+          add = "jitter",
+          legend = "none",
+          lwd=0.3,
+          add.params = list(size = 0.6,alpha=0.5))+
+  mytheme+
+  theme(axis.text.x=element_text(hjust = 0.5,colour="white",size=3),
+        axis.title.x = element_text(hjust = 0.5,colour="white",size=3),
+        legend.title = element_blank())+
+  stat_compare_means(comparisons =list(c("abandoned agricultural/aquacultural site", "clearing-cut site"),
+                                       c("abandoned agricultural/aquacultural site",
+                                         "site with mangrove mortality"),
+                                       c("clearing-cut site","site with mangrove mortality")),
+                     size=2,aes(label = ..p.signif..),show.legend = F,hide.ns = FALSE,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
+  stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=2,aes(color=LULCC_before),
+                   position = position_dodge(width = 0.75),show.legend = F)+
+    ylab(expression(paste("Aboveground biomass carbon density (Mg C ha"^-1*")"))) 
+
+P2=ggboxplot(BBC_re,x="LULCC_before",y="BBC_mean",
+          color = "LULCC_before", 
+          add = "jitter",
+          legend = "none",
+          lwd=0.3,
+          add.params = list(size = 0.6,alpha=0.5))+
+  mytheme+
+  theme(axis.text.x=element_text(hjust = 0.5,colour="white",size=3),
+        axis.title.x = element_text(hjust = 0.5,colour="white",size=3),
+        legend.title = element_blank())+
+  stat_compare_means(comparisons =list(c("abandoned agricultural/aquacultural site", "clearing-cut site"),
+                                       c("abandoned agricultural/aquacultural site",
+                                         "site with mangrove mortality"),
+                                       c("clearing-cut site","site with mangrove mortality")),
+                     size=2,aes(label = ..p.signif..),show.legend = F,hide.ns = FALSE,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
+  stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=2,aes(color=LULCC_before),
+                   position = position_dodge(width = 0.75),show.legend = F)+
+    ylab(expression(paste("Belowground biomass carbon density (Mg C ha"^-1*")"))) 
+
+P3=ggboxplot(SCS_re,x="LULCC_before",y="SCS_mean_100",
+          color = "LULCC_before", 
+          add = "jitter",
+          legend = "none",
+          lwd=0.3,
+          add.params = list(size = 0.6,alpha=0.5))+
+  mytheme+
+  theme(axis.text.x=element_text(hjust = 0.5,colour="white",size=3),
+        axis.title.x = element_text(hjust = 0.5,colour="white",size=3),
+        legend.title = element_blank())+
+  stat_compare_means(comparisons =list(c("abandoned agricultural/aquacultural site", "clearing-cut site"),
+                                       c("abandoned agricultural/aquacultural site",
+                                         "site with mangrove mortality"),
+                                       c("clearing-cut site","site with mangrove mortality")),
+                     size=2,aes(label = ..p.signif..),show.legend = F,hide.ns = FALSE,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
+  stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=2,aes(color=LULCC_before),
+                   position = position_dodge(width = 0.75),show.legend = F)+
+    ylab(expression(paste("Sediment carbon density-1 m depth (Mg C ha"^-1*")"))) 
+
+
+ggarrange(P1,P2,P3,nrow=1,
+          labels="auto",
+          font.label=list(face="plain",family = "Helvetica",size=7,face="bold"),
+          legend ="bottom",common.legend = T)
+
+
+ggsave(path = "[please change it into your own path]",
+       filename="Fig.S10.png",
+       width = 180, height = 80, units = "mm",dpi=300)
+
+```
+
+```{r}
+### Fig. S3 ###
+ABC_select=ABC_select%>%filter(re_af=="reforestation")
+
+ABC_select$rate=ABC_select$ABC_mean/ABC_select$Age
+
+ABC_select_mean = ABC_select %>% 
+  dplyr::group_by(timegroup) %>% 
+  dplyr::summarize(average = mean(rate),
+                   std=sd(rate,na.rm = TRUE)/sqrt(length(rate)),
+                   median=median(rate)) %>%
+  arrange(desc(average))%>%
+  ungroup()
+
+### test of normality and homogeneity of model residuals
+ano=aov(rate~timegroup,data=ABC_select)
+plot(ano,1)
+leveneTest(rate~timegroup,data=ABC_select)
+
+# normality of residuals
+plot(ano, 2)
+aov_residuals <- residuals(object = ano)
+shapiro.test(x = aov_residuals)
+## significant in the test of normality and homoscedasticity of model residuals
+
+
+## use Kruskal–Wallis test with Dunn test as the post hoc test.
+ano=kruskal.test(rate~timegroup,data=ABC_select)
+DT=dunnTest(rate~timegroup,data=ABC_select,method="bh")
+PT=DT$res
+a=cldList(P.adj ~ Comparison,
+        data = PT,
+        threshold = 0.05)
+
+ABC_select_mean$cl=a$Letter
+
+# function for number of observations 
+give.n <- function(x){
+  return(data.frame(y = -1, label =  paste('n =', length(x))))
+  # experiment with the multiplier to find the perfect position
+}
+
+ggplot(ABC_select,aes(x=timegroup,y=rate))+
+  geom_boxplot(outlier.alpha = 0.2,outlier.size = 0.5,lwd=0.3,color="#326232")+
+  # geom_point(position=position_jitterdodge())+
+  stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=2.5,
+                   position = position_dodge(width = 0.75),color="#326232")+
+  geom_point(data=ABC_select_mean, 
+           aes(x = timegroup, y = average,group=1),size=1,             
+            position = position_dodge2(width = 0.75,
+                                        preserve = "single"),color="#326232",shape=1)+
+  geom_path(data = ABC_select_mean, 
+           aes(x = timegroup, y = average,group=1),size=0.7,             
+            position = position_dodge2(width = 0.75,
+                                        preserve = "single"),color="#326232")+
+  geom_text(data = ABC_select_mean, aes(x = timegroup, y = 12, label = cl), size = 2.5,color="#326232")+
+  scale_y_continuous(limits = c(-2,12.5))+
+  mytheme+
+  theme(axis.title.x = element_text(face="plain",family = "Helvetica",size=7))+
+    # ggtitle(expression("Aboveground biomass carbon"))+
+    xlab("Age Group (year)")+
+    ylab(expression(atop("Aboveground biomass carbon accumulation rate",
+                                             atop(textstyle(("Mg C ha"^-1*" yr"^-1))))))
+
+ggsave(path = "[please change it into your own path]",
+       filename="Fig.S3.png",
+       width = 100, height = 60, units = "mm",dpi=300)
+```
+
+```{r}
 ## Table S2 ##
 fm=lmer(ABC_mean~Age+re_af+MAT+MAP+Age*re_af+Age*MAT+Age*MAP+Age*re_af*MAP+Age*re_af*MAT+(1|ID),data=ABC)
 fm_log=lmer(ABC_mean~log(Age)+re_af+MAT+MAP+log(Age)*re_af+log(Age)*MAT+log(Age)*MAP+log(Age)*re_af*MAP+log(Age)*re_af*MAT+(1|ID),data=ABC)
@@ -625,7 +837,7 @@ Anova(fm_log)
 ```
 
 ```{r}
-## Fig. S3##
+## Fig. S4##
 MAP_slice=function(data,MAP){
   l=nrow(data)
   MAPgroup=matrix(NA,nrow=l)
@@ -648,7 +860,7 @@ MAP_slice=function(data,MAP){
 
 # function for number of observations 
 give.n <- function(x){
-  return(data.frame(y = -2, label =  paste('n =', length(x))))
+  return(data.frame(y = -8, label =paste(length(x))))
   # experiment with the multiplier to find the perfect position
 }
 
@@ -670,9 +882,14 @@ ABC_timeMAP_sum=ABC_timeMAP%>%group_by(inter,timegroup)%>%summarise(average=mean
 
 P1=ggplot(ABC_timeMAP,aes(x=timegroup,y=ABC_mean,color=inter))+
   geom_boxplot(outlier.alpha=0.2,outlier.size = 0.5,lwd=0.3)+
-  stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=1.5,
-                   position = position_dodge(width = 0.75))+
-  stat_compare_means(size=3,aes(label = ..p.signif..),label.y = 290,hide.ns = TRUE,show.legend = F)+
+  stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=2,
+                   position = position_dodge(width = 0.75),show.legend = F)+
+  stat_compare_means(size=2.5,aes(label = ..p.signif..),label.y = 240,hide.ns = TRUE,show.legend = F,
+                     method = 'kruskal.test',
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
   scale_color_manual(values = c("afforestation.(500,1500]"="#00D7FF",
                                 "reforestation.(500,1500]"="#FFC4C4",
                                 "afforestation.(1500,2500]"="#0096FF",
@@ -682,14 +899,25 @@ P1=ggplot(ABC_timeMAP,aes(x=timegroup,y=ABC_mean,color=inter))+
   stat_summary(fun.y=mean, geom="point", shape=1, size=1, aes(color=inter),
              position = position_dodge2(width = 0.75,
                                         preserve = "total"))+
+  guides(color=guide_legend(title=expression(paste(
+    "Restoration pathways + Precipitation group (mm yr"^-1*")")), 
+                            title.position = "top", 
+                              title.hjust = 0.5))+
   geom_line(data = ABC_timeMAP_sum, 
             mapping = aes(x = timegroup, y = average,group=inter),
             size=0.5,position = position_dodge())+
+  scale_y_continuous(limits = c(-10,250))+
   mytheme+
-    theme(axis.title.x=element_text(face="plain",family = "Helvetica",size=7))+
-    ggtitle(expression("Aboveground biomass carbon"))+
+    theme(legend.title =element_text(face="plain",family = "Helvetica",size=7),
+          axis.title.x =element_text(face="plain",family = "Helvetica",size=7) )+
+    # ggtitle(expression("Aboveground biomass carbon"))+
     xlab("Age Group (year)")+
-    ylab(expression(paste("Carbon density (Mg C ha"^-1*")"))) 
+    ylab(expression(atop("Aboveground biomass carbon density", paste("(Mg C ha"^-1*")")))) 
+
+give.n <- function(x){
+  return(data.frame(y = -4, label =paste(length(x))))
+  # experiment with the multiplier to find the perfect position
+}
 
 BBC_time=timeslice(BBC,BBC$Age)
 BBC_time$timegroup=factor(BBC_time$timegroup,levels =
@@ -709,9 +937,14 @@ BBC_timeMAP_sum=BBC_timeMAP%>%group_by(inter,timegroup)%>%summarise(average=mean
 
 P2=ggplot(BBC_timeMAP,aes(x=timegroup,y=BBC_mean,color=inter))+
   geom_boxplot(outlier.alpha=0.2,outlier.size = 0.5,lwd=0.3)+
-  stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=1.5,
-                   position = position_dodge(width = 0.75))+
-  stat_compare_means(size=3,aes(label = ..p.signif..),label.y = 90,hide.ns = TRUE,show.legend = F)+
+  stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=2,
+                   position = position_dodge(width = 0.75),show.legend = F)+
+  stat_compare_means(size=2.5,aes(label = ..p.signif..),label.y =65,hide.ns = TRUE,show.legend = F,
+                     method = 'kruskal.test',
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
   scale_color_manual(values = c("afforestation.(500,1500]"="#00D7FF",
                                 "reforestation.(500,1500]"="#FFC4C4",
                                 "afforestation.(1500,2500]"="#0096FF",
@@ -724,40 +957,48 @@ P2=ggplot(BBC_timeMAP,aes(x=timegroup,y=BBC_mean,color=inter))+
   geom_line(data = BBC_timeMAP_sum, 
             mapping = aes(x = timegroup, y = average,group=inter),
             size=0.5,position = position_dodge())+
+  guides(color=guide_legend(title=expression(paste(
+    "Restoration pathways + Precipitation group (mm yr"^-1*")")), 
+                            title.position = "top", 
+                              title.hjust = 0.5))+
+  scale_y_continuous(limits = c(-6,70))+
   mytheme+
-    theme(axis.title.x=element_text(face="plain",family = "Helvetica",size=7))+
-    ggtitle(expression("Belowground biomass carbon"))+
+    theme(legend.title =element_text(face="plain",family = "Helvetica",size=7),
+          axis.title.x =element_text(face="plain",family = "Helvetica",size=7))+
+    # ggtitle(expression("Belowground biomass carbon"))+
     xlab("Age Group (year)")+
-    ylab(expression(paste("Carbon density (Mg C ha"^-1*")"))) 
+    ylab(expression(atop("Belowground biomass carbon density", paste("(Mg C ha"^-1*")")))) 
 
 data$re_af=factor(data$re_af,level=c("afforestation","reforestation"))
 data_1=data%>%filter(group!="intact")
 
 P3=ggdensity(data_1, x = "MAP",aes(y = ..count..),
    # add = "mean", 
-   rug = TRUE,
+   rug = FALSE,
    color = "re_af", fill = "re_af",
    palette = c("#0073C2FF", "#FC4E07"))+
-  ylab("Relative Frequency")+
-  xlab("Mean Annual Precipitation (mm)")+
+  ylab(expression(atop(" ",paste("Relative Frequency"))))+
+  xlab(expression(paste("Mean Annual Precipitation (mm yr"^-1*")")))+
   # theme(panel.border = element_rect(fill=NA))+
   mytheme+
+  scale_y_continuous(expand = c(0,0))+
+  # scale_x_continuous()+
   theme(legend.position = c(0.9, 0.9),
         legend.background = element_blank(),
         legend.title = element_blank(),
         axis.title.x = element_text(face="plain",family = "Helvetica",size=7))+
   geom_vline(aes(xintercept = 500), 
-             linetype = "dashed", size = 0.6,
-             color = "#0073C2FF")+
+             linetype = "dashed", size = 0.4,
+             color = "black")+
   geom_vline(aes(xintercept = 1500), 
-             linetype = "dashed", size = 0.6,
-             color = "#0073C2FF")+
+             linetype = "dashed", size = 0.4,
+             color = "black")+
   geom_vline(aes(xintercept = 2500), 
-             linetype = "dashed", size = 0.6,
-             color = "#FC4E07")+
+             linetype = "dashed", size = 0.4,
+             color = "black")+
   geom_vline(aes(xintercept = 3500), 
-             linetype = "dashed", size = 0.6,
-             color = "#FC4E07")
+             linetype = "dashed", size = 0.4,
+             color = "black")
 
 wilcox.test(data_1$MAP~data_1$re_af)
 
@@ -774,9 +1015,9 @@ ggarrange(P3,
 
 
 ggsave(path = "[please change it into your own path]",
-       # change it into your own path
-       filename="Fig.S3.png",
-       width = 190, height = 220, units = "mm",dpi=300)
+       filename="Fig.S4.png",
+       width = 150, height = 200, units = "mm",dpi=300)
+
 ```
 
 ```{r}
@@ -816,12 +1057,12 @@ SCS=SCS%>%filter(timegroup!="(40,80]")
 
 SCS_select_mean = SCS %>% 
   dplyr::group_by(timegroup,re_af) %>% 
-  dplyr::summarize(average_SFT=mean(SCS_increase_SFT,na.rm=TRUE),
-                   sd=sd(SCS_increase_SFT,na.rm=TRUE)/sqrt(length(SCS_increase_SFT)),
+  dplyr::summarize(average_all=mean(SCS_increase_all,na.rm=TRUE),
+                   sd=sd(SCS_increase_all,na.rm=TRUE)/sqrt(length(SCS_increase_all)),
                    median=median(SCS_increase_all)) %>%
   ungroup()
 
-ggplot(SCS,aes(x=Age,y=SCS_increase_SFT,color=re_af))+
+ggplot(SCS,aes(x=Age,y=SCS_increase_all,color=re_af))+
   geom_point()
 
 give.n <- function(x){
@@ -829,30 +1070,36 @@ give.n <- function(x){
   # experiment with the multiplier to find the perfect position
 }
 
-P1=ggplot(SCS,aes(x=timegroup,y=SCS_increase_SFT,color=re_af))+
+ggplot(SCS,aes(x=timegroup,y=SCS_increase_all,color=re_af))+
   geom_boxplot(outlier.alpha=0.2,outlier.size = 0.5,lwd=0.3)+
-  stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=1.5,
+  stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=2,show.legend = F,
                    position = position_dodge(width = 0.75))+
-  stat_compare_means(size=3,aes(label = ..p.signif..),label.y = 180,hide.ns = TRUE,show.legend = F)+
+  stat_compare_means(size=2,aes(label = ..p.signif..),label.y = 180,hide.ns = TRUE,show.legend = F,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
   scale_color_manual(values = c("reforestation"="#B8860B","afforestation"="#F3D33A"))+
     stat_summary(fun.y=mean, geom="point", shape=1, size=1, aes(color=re_af),
              position = position_dodge2(width = 0.75,
                                         preserve = "single"))+
     geom_line(data = SCS_select_mean, 
-            mapping = aes(x = timegroup, y = average_SFT,group=re_af),size=0.7,position = position_dodge())+
+            mapping = aes(x = timegroup, y = average_all,group=re_af),size=0.7,position = position_dodge())+
     mytheme+
-    theme(axis.title.x=element_text(face="plain",family = "Helvetica",size=7))+
+    theme(axis.title.x=element_text(face="plain",family = "Helvetica",size=7),
+          legend.title = element_blank(),
+          legend.margin=margin(t=-5))+
     ggtitle(expression("Sediment carbon - 1m depth"))+
     xlab("Age Group (year)")+
     ylab(expression(paste("Carbon density increment (Mg C ha"^-1*")"))) 
 
 
 ggsave(path = "[please change it into your own path]",
-       # change it into your own path
        filename="Fig.S2.png",
        width = 100, height = 70, units = "mm",dpi=300)
 
 ```
+
 
 
 ```{r}
@@ -898,7 +1145,7 @@ P1=ggplot(ABC,aes(x=salinity_pore,y=ABC_mean))+
               size=0.5)+
       stat_poly_eq(formula = y~x,
                aes(label = paste(..rr.label..,..p.value.label..,sep = "~~~")),
-               size=1.8,
+               size=1.5,
                label.y = "top", label.x = "left",
                parse = TRUE)+
     scale_color_manual(values = c("reforestation"="#006400","afforestation"="#51C151"))+
@@ -916,7 +1163,12 @@ P5=ggboxplot(data_1,x="re_af",y="salinity_pore",
   theme(axis.text.x=element_text(hjust = 0.5,colour="white",size=3),
         axis.title.x = element_text(hjust = 0.5,colour="white",size=3))+
     scale_color_manual(values = c("reforestation"="#006400","afforestation"="#51C151"))+
-  stat_compare_means(size=2,aes(label = ..p.signif..),label.x = 1.5,label.y = 58,hide.ns = TRUE)+
+  stat_compare_means(size=2,aes(label = ..p.signif..),
+                     label.x = 1.2,label.y = 58,hide.ns = TRUE,show.legend = F,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
   stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=1.5,aes(color=re_af),
                    position = position_dodge(width = 0.75))+
   ylab(expression(paste("Sediment porewater salinity (psu)")))+
@@ -933,12 +1185,12 @@ P2=ggplot(ABC,aes(x=SC_mean,y=ABC_mean))+
               size=0.5)+
       stat_poly_eq(formula = y~x,
                aes(label = paste(..rr.label..,..p.value.label..,sep = "~~~")),
-               size=1.8,
+               size=1.5,
                label.y = "top", label.x = "left",
                parse = TRUE)+
     scale_color_manual(values = c("reforestation"="#006400","afforestation"="#51C151"))+
   mytheme+
-    xlab(expression(paste("Sediment organic carbon content (%)")))+
+    xlab(expression(paste("Sediment total organic carbon content (%)")))+
     ylab(expression(paste("Carbon density (Mg C ha"^-1*")")))
 
 # function for number of observations 
@@ -954,14 +1206,19 @@ P6=ggboxplot(data_1,x="re_af",y="SC_mean",
           lwd=0.3,
           add.params = list(size = 0.6, alpha=0.5))+
     scale_color_manual(values = c("reforestation"="#006400","afforestation"="#51C151"))+
-  stat_compare_means(size=2,aes(label = ..p.signif..),label.x = 1.5,label.y = 20)+
+  stat_compare_means(size=1.5,aes(label = ..p.signif..),label.x = 1.2,label.y = 20,
+                     show.legend = F,hide.ns = TRUE,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
     stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=1.5,aes(color=re_af),
                    position = position_dodge(width = 0.75))+
   mytheme+
   theme(axis.text.x=element_text(hjust = 0.5,colour="white",size=3),
         axis.title.x = element_text(hjust = 0.5,colour="white",size=3))+
       scale_y_continuous(limits=c(-2,22),breaks = seq(0,20,5),expand=c(0,0))+
-    ylab(expression(paste("Sediment organic carbon content (%)")))
+    ylab(expression(paste("Sediment total organic carbon content (%)")))
 
 
 P3=ggplot(ABC,aes(x=N.concentration_mean,y=ABC_mean))+
@@ -975,12 +1232,12 @@ P3=ggplot(ABC,aes(x=N.concentration_mean,y=ABC_mean))+
               size=0.5)+
       stat_poly_eq(formula = y~x,
                aes(label = paste(..rr.label..,..p.value.label..,sep = "~~~")),
-               size=1.8,
+               size=1.5,
                label.y = "top", label.x = "left",
                parse = TRUE)+
     scale_color_manual(values = c("reforestation"="#006400","afforestation"="#51C151"))+
   mytheme+
-    xlab(expression(paste("Sediment nitrogen content (%)")))+
+    xlab(expression(paste("Sediment total nitrogen content (%)")))+
     ylab(expression(paste("Carbon density (Mg C ha"^-1*")")))
 
 # function for number of observations 
@@ -996,14 +1253,19 @@ P7=ggboxplot(data_1,x="re_af",y="N.concentration_mean",
           lwd=0.3,
           add.params = list(size = 0.6, alpha = 0.5))+
     scale_color_manual(values = c("reforestation"="#006400","afforestation"="#51C151"))+
-  stat_compare_means(size=2,aes(label = ..p.signif..),label.x = 1.5,label.y = 0.75)+
+  stat_compare_means(size=1.5,aes(label = ..p.signif..),label.x = 1.2,label.y = 0.75,
+                     show.legend = F,hide.ns = TRUE,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
     stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=1.5,aes(color=re_af),
                    position = position_dodge(width = 0.75))+
   mytheme+
   theme(axis.text.x=element_text(hjust = 0.5,colour="white",size=3),
         axis.title.x = element_text(hjust = 0.5,colour="white",size=3))+
   scale_y_continuous(limits = c(0,0.8))+
-  ylab(expression(paste("Sediment nitrogen content (%)")))
+  ylab(expression(paste("Sediment total nitrogen content (%)")))
 
 P8=ggplot(ABC,aes(x=MAP,y=ABC_mean,color=re_af,fill=re_af))+
    geom_point(aes(color=re_af),size=1,
@@ -1017,19 +1279,19 @@ P8=ggplot(ABC,aes(x=MAP,y=ABC_mean,color=re_af,fill=re_af))+
               size=0.5)+
       stat_poly_eq(formula = y~x,
                aes(label = paste(..rr.label..,..p.value.label..,sep = "~~~")),
-               size=1.8,
+               size=1.5,
                label.y = "top", label.x = "left",
                parse = TRUE)+
     scale_color_manual(values = c("reforestation"="#006400","afforestation"="#51C151"))+
   scale_fill_manual(values = c("reforestation"="#006400","afforestation"="#51C151"))+
   # scale_x_continuous(limits = c(1000,3500))+
   mytheme+
-    xlab(expression(paste("Mean Annual Precipitation (mm)")))+
+  xlab(expression(paste("Mean annual precipitation (mm yr"^-1*")")))+
     ylab(expression(paste("Carbon density (Mg C ha"^-1*")")))
 
 # function for number of observations 
 give.n <- function(x){
-  return(data.frame(y = -60, label =  paste('n =', length(x))))
+  return(data.frame(y = -100, label =  paste('n =', length(x))))
   # experiment with the multiplier to find the perfect position
 }
 
@@ -1043,23 +1305,27 @@ P9=ggboxplot(data_1,x="re_af",y="MAP",
   theme(axis.text.x=element_text(hjust = 0.5,colour="white",size=3),
         axis.title.x = element_text(hjust = 0.5,colour="white",size=3))+
     scale_color_manual(values = c("reforestation"="#006400","afforestation"="#51C151"))+
-  stat_compare_means(size=2,aes(label = ..p.signif..),label.x = 1.5,label.y = 58,hide.ns = TRUE)+
+  stat_compare_means(size=2,aes(label = ..p.signif..),label.x = 1.2,label.y = 58,
+                     show.legend = F,hide.ns = TRUE,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("p ≤ 0.0001", "p ≤ 0.001", 
+                                                    "p ≤ 0.01", "p ≤ 0.05", 
+                                                    "ns")))+
     stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=1.5,aes(color=re_af),
                    position = position_dodge(width = 0.75))+
-  ylab(expression(paste("Mean Annual Precipitation (mm)")))+
-  scale_y_continuous(limits = c(-100,4600))
+  ylab(expression(paste("Mean annual precipitation (mm yr"^-1*")")))+
+  scale_y_continuous(limits = c(-200,4600))
 
 
 ggarrange(P8,P9,P2,P6,P3,P7,P1,P5, ncol = 2, nrow =4,widths = c(2,1) ,labels="auto",common.legend = TRUE,legend="bottom",align = "v",font.label=list(face="plain",family = "Helvetica",size=7,face="bold"))
 
 ggsave(path = "[please change it into your own path]",
        filename="Fig.3.png",
-       width = 88, height = 170, units = "mm",dpi=300)
-
+       width = 75, height = 140, units = "mm",dpi=300)
 ```
 
 ```{r}
-### Figure S5 ###
+### Fig. S6 ###
 RS=data_1
 
 RS_melt_nutrient=melt(RS,
@@ -1120,8 +1386,13 @@ P2=ggplot(RS,aes(x=salinity_pore,y=BA))+
   scale_x_continuous(limits=c(15,70),expand=c(0,0))+
   scale_y_continuous(limits=c(0,2),expand=c(0,0))+
     xlab("Sediment porewater salinity (psu)")+
-    ylab("BBC/ABC")
+    ylab("BGC/AGC")
 
+# function for number of observations 
+give.n <- function(x){
+  return(data.frame(y = 3, label =  paste('n =', length(x))))
+  # experiment with the multiplier to find the perfect position
+}
 
 P4=ggboxplot(data,x="re_af",y="salinity_pore",
           color = "re_af", 
@@ -1130,6 +1401,8 @@ P4=ggboxplot(data,x="re_af",y="salinity_pore",
           lwd=0.3,
           add.params = list(size = 0.6, alpha = 0.5))+
   stat_compare_means(size=5,aes(label = ..p.signif..),label.x = 1.5,label.y = 80,hide.ns = TRUE)+
+  stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=1.5,aes(color=re_af),
+                   position = position_dodge(width = 0.75))+
   mytheme+
   theme(axis.title.x = element_text(hjust = 0.5,colour="white",size=5),
         axis.text.x = element_text(face="plain",color="white",size=5))+
@@ -1140,7 +1413,7 @@ ggarrange(P2,P4,ncol = 2,nrow=1,widths = c(2,1),labels="auto",legend = "bottom",
 
 
 ggsave(path = "[please change it into your own path]",
-       filename="Fig.S5.png",
+       filename="Fig.S6.png",
        width = 88, height = 50, units = "mm")
 ```
 
@@ -1154,11 +1427,12 @@ data=data%>%
   filter(Age<=40)
 
 colnames(data)[c(19:24,26,28:33,35)]=c("BC_mean","ABC_mean","BBC_mean",
-                                    "SCS_mean","SCS_mean_100","SCS_increase_all","CAR_SFT",
+                                    "SCS_mean","SCS_mean_100","SCS_increase_all",
                                        "SC_mean","TECS_mean",
                                        "salinity_pore",
                                        "sand","silt","clay",
                                        "TN_mean","N.concentration_mean")  ## simplify column names
+
 
 ABC=data %>% drop_na(ABC_mean)%>%filter(group=="restored")%>% 
   filter(Species!="")%>%
@@ -1551,7 +1825,7 @@ p9=ggplot(data = world_tecs_com) +
         legend.justification = "right",
           legend.margin = margin(t = 2, r = 0, b = 2, l = 2, unit = "mm"))+
   scale_x_continuous(expand = c(0,0))+
-  scale_y_continuous(expand = c(0,0),limits = c(-48,80))+
+  scale_y_continuous(expand = c(0,0),limits = c(-48,55))+
     xlab("Longitude")+
     ylab("Latitude")+
   annotation_custom(
@@ -1574,6 +1848,7 @@ ggsave(path = "[please change it into your own path]",
        filename="Fig.4.png",
        width = 180, height = 135, units = "mm",dpi=300)
 
+
 ```
 
 ```{r}
@@ -1588,7 +1863,7 @@ species%>%freq_table(re_af,Species_2)
 
 A=as.data.frame(table(species$plant_nature,species$Species_2,species$re_af))
 B=as.data.frame(table(species$Species_2,species$re_af))
-write.csv(B,"species_frequency.csv")
+write.csv(A,"species_frequency.csv")
 
 
 A$Var1=gsub("nature","natural",A$Var1)
@@ -1621,10 +1896,7 @@ ggsave(path = "[please change it into your own path]",
 ```
 
 ```{r}
-### Fig. S10 ###
-library("nlraa")
-library("FSA")
-
+### Fig. S12 ###
 ABC_ref=ABC%>%filter(re_af=="reforestation")%>%arrange(Age)%>%filter(Age<=40)
 ABC_aff=ABC%>%filter(re_af=="afforestation")%>%arrange(Age)%>%filter(Age<=40)
 
@@ -1802,14 +2074,14 @@ b=ggplot(aff_r,aes(x=model,y=AIC,color=model))+
 ggarrange(a,b,ncol=2,labels=c("a","b"),common.legend = T,legend = "bottom",font.label=list(face="plain",family = "Helvetica",size=6,face="bold"))
 
 ggsave(path = "[please change it into your own path]",
-       filename="Fig.S10.png",
+       filename="Fig.S12.png",
        width = 110, height = 120, units = "mm")
 
 ```
 
 
 ```{r}
-### Fig. S4 ###
+### Fig. S5 ###
 data=read.csv("Supplementary Data.csv",stringsAsFactors = FALSE,fileEncoding="latin1")
 
 data=data%>%
@@ -1817,13 +2089,12 @@ data=data%>%
   filter(re_af!="")%>%
   mutate(re_af=factor(re_af,level=c("afforestation","reforestation")))
 
-colnames(data)[c(19:30,32,35:40,42)]=c("BC_mean","ABC_mean","BBC_mean",
-                                       "SCS_mean","SCS_mean_100","SCS_increase_all","SCS_increase_all_mean",
-                                       "SCS_increase_SFT","CAR_all","CAR_SFT","CAR","CAR_method",
+colnames(data)[c(19:24,26,28:33,35)]=c("BC_mean","ABC_mean","BBC_mean",
+                                    "SCS_mean","SCS_mean_100","SCS_increase_all",
                                        "SC_mean","TECS_mean",
                                        "salinity_pore",
                                        "sand","silt","clay",
-                                       "TN_mean","N.concentration_mean")  ## simplify column names
+                                       "TN_mean","N.concentration_mean")   ## simplify column names
 data$SC_mean=as.numeric(data$SC_mean)
 
 mytheme=theme_bw()+
@@ -1842,12 +2113,24 @@ mytheme=theme_bw()+
         panel.grid.minor = element_blank(),
         axis.ticks = element_line(colour = 'black', size = 0.3))
 
+# function for number of observations 
+give.n <- function(x){
+  return(data.frame(y = -2, label =  paste('n =', length(x))))
+  # experiment with the multiplier to find the perfect position
+}
+
 p6=ggboxplot(data,x="re_af",y="silt",
           color = "re_af", 
           add = "jitter", 
           legend = "none",
           add.params = list(alpha = 0.5))+
-  stat_compare_means(size=3,label = "p.signif",label.x=1.5,label.y = 85,hide.ns = TRUE)+
+  stat_compare_means(size=2.5,label = "p.signif",label.x=1.5,label.y = 85,hide.ns = TRUE,show.legend = F,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
+      stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=2.5,aes(color=re_af),
+                   position = position_dodge(width = 0.75))+
   mytheme+
    theme(
         axis.text.x=element_blank(), 
@@ -1856,7 +2139,7 @@ p6=ggboxplot(data,x="re_af",y="silt",
         legend.title=element_blank(),
         panel.grid.major =element_blank(), 
         panel.grid.minor = element_blank()) +
-  scale_y_continuous(limits = c(0,90))+
+  scale_y_continuous(limits = c(-5,90))+
   ylab("sediment silt content / %")
 
 p7=ggboxplot(data,x="re_af",y="sand",
@@ -1864,7 +2147,13 @@ p7=ggboxplot(data,x="re_af",y="sand",
           add = "jitter", 
           legend = "none",
           add.params = list(alpha = 0.5))+
-  stat_compare_means(size=3,label = "p.signif",label.x=1.5,label.y = 85,hide.ns = TRUE)+
+  stat_compare_means(size=2.5,label = "p.signif",label.x=1.5,label.y = 85,hide.ns = TRUE,show.legend = F,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
+      stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=2.5,aes(color=re_af),
+                   position = position_dodge(width = 0.75))+
   mytheme+
   theme(
         axis.text.x=element_blank(), 
@@ -1873,7 +2162,7 @@ p7=ggboxplot(data,x="re_af",y="sand",
         legend.title=element_blank(),
         panel.grid.major =element_blank(), 
         panel.grid.minor = element_blank())+
-  scale_y_continuous(limits = c(0,90))+
+  scale_y_continuous(limits = c(-5,90))+
   ylab("sediment sand content / %")
 
 p8=ggboxplot(data,x="re_af",y="clay",
@@ -1882,7 +2171,13 @@ p8=ggboxplot(data,x="re_af",y="clay",
           legend = "none",
           add.params = list(alpha = 0.5))+
   mytheme+
-  stat_compare_means(size=3,label = "p.signif",label.x=1.5,label.y = 65,hide.ns = TRUE)+
+  stat_compare_means(size=2.5,label = "p.signif",label.x=1.5,label.y = 85,hide.ns = TRUE,show.legend = F,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
+      stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=2.5,aes(color=re_af),
+                   position = position_dodge(width = 0.75))+
   theme(
         axis.text.x=element_blank(), 
         axis.title.x=element_text(face="plain",color="white"), 
@@ -1890,26 +2185,30 @@ p8=ggboxplot(data,x="re_af",y="clay",
         legend.title=element_blank(),
         panel.grid.major =element_blank(), 
         panel.grid.minor = element_blank())+
-  scale_y_continuous(limits = c(0,70))+
+  scale_y_continuous(limits = c(-5,90))+
   ylab("sediment clay content / %")
-
-data_texture=data%>%select(ID,group,Author,Location,Age,re_af,silt,clay,sand)
-data_texture_melt=melt(data_texture,
-              id.vars = c("ID","group","Author","Location","Age","re_af"),
-             measure.vars = c("silt",
-                              "clay",
-                              "sand"),
-             variable.name = "sediment properties")%>%filter(value!="")
 
 
 data=data%>%filter(group=="initial")
+
+# function for number of observations 
+give.n <- function(x){
+  return(data.frame(y = -1, label =  paste('n =', length(x))))
+  # experiment with the multiplier to find the perfect position
+}
 
 P1=ggboxplot(data,x="re_af",y="initial_SC",
           color = "re_af", 
           add = "jitter", 
           legend = "none",
           add.params = list(alpha = 0.5))+
-  stat_compare_means(size=3,label = "p.signif",label.x=1.5,label.y = 19,hide.ns = TRUE)+
+  stat_compare_means(size=2.5,label = "p.signif",label.x=1.5,label.y = 19,hide.ns = TRUE,show.legend = F,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
+      stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=2.5,aes(color=re_af),
+                   position = position_dodge(width = 0.75))+
   mytheme+
     theme(
         axis.text.x=element_blank(), 
@@ -1918,16 +2217,27 @@ P1=ggboxplot(data,x="re_af",y="initial_SC",
         legend.title=element_blank(),
         panel.grid.major =element_blank(), 
         panel.grid.minor = element_blank())+
-  scale_y_continuous(limits = c(0,20))+
+  scale_y_continuous(limits = c(-2,20))+
   ylab("initial sediment TOC content / %")
 
+# function for number of observations 
+give.n <- function(x){
+  return(data.frame(y = -0.05, label =  paste('n =', length(x))))
+  # experiment with the multiplier to find the perfect position
+}
 
 P2=ggboxplot(data,x="re_af",y="initial_N",
           color = "re_af", 
           add = "jitter", 
           legend = "none",
           add.params = list(alpha = 0.5))+
-  stat_compare_means(size=3,label = "p.signif",label.x=1.5,hide.ns = TRUE)+
+  stat_compare_means(size=2.5,label = "p.signif",label.x=1.5,hide.ns = TRUE,show.legend = F,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
+        stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=2.5,aes(color=re_af),
+                   position = position_dodge(width = 0.75))+
   mytheme+theme(
         axis.text.x=element_blank(), 
         axis.title.x=element_text(face="plain",color="white"), 
@@ -1935,16 +2245,27 @@ P2=ggboxplot(data,x="re_af",y="initial_N",
         legend.title=element_blank(),
         panel.grid.major =element_blank(), 
         panel.grid.minor = element_blank())+
-  scale_y_continuous(limits = c(0,0.5))+
-  ylab("initial sediment N content / %")
+  scale_y_continuous(limits = c(-0.08,0.5))+
+  ylab("initial sediment TN content / %")
 
+# function for number of observations 
+give.n <- function(x){
+  return(data.frame(y = 2, label =  paste('n =', length(x))))
+  # experiment with the multiplier to find the perfect position
+}
 
 P3=ggboxplot(data,x="re_af",y="initial_CN",
           color = "re_af", 
           add = "jitter", 
           legend = "none",
           add.params = list(alpha = 0.5))+
-  stat_compare_means(size=3,label = "p.signif",label.x=1.5,label.y=39,hide.ns = TRUE)+
+  stat_compare_means(size=2.5,label = "p.signif",label.x=1.5,label.y=39,hide.ns = TRUE,show.legend = F,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "ns")))+
+  stat_summary(fun.data = give.n, geom = "text", fun.y = median, size=2.5,aes(color=re_af),
+                   position = position_dodge(width = 0.75))+
   mytheme+
   theme(
         axis.text.x=element_blank(), 
@@ -1957,33 +2278,16 @@ P3=ggboxplot(data,x="re_af",y="initial_CN",
   ylab("initial sediment C:N")
 
 
-P4=ggboxplot(data,x="re_af",y="initial_SC",
-          color = "re_af", 
-          add = "jitter", 
-          legend = "none",
-          add.params = list(alpha = 0.5))+
-  stat_compare_means(size=5,label = "p.signif",label.x=1.5,hide.ns = TRUE)+
-  mytheme+
-  theme(
-        axis.text.x=element_blank(), 
-        axis.title.x=element_text(face="plain",color="white"), 
-        plot.title=element_text(hjust=0.5,colour = "white"),
-        legend.title=element_blank(),
-        panel.grid.major =element_blank(), 
-        panel.grid.minor = element_blank())+
-  ylab("initial sediment TOC content / %")
-
-
 ggarrange(p7,p6,p8,P1,P2,P3, ncol = 3, nrow =2 ,labels="auto",common.legend = TRUE,legend="bottom",font.label=list(face="plain",family = "Helvetica",size=7,face="bold"))
 
-ggsave("Fig.S4.png", 
+ggsave("Fig.S5.png", 
        path ="[please change it into your own path]",
        width = 180,height = 140,units = c("mm"),dpi = 300)
 ```
 
 ```{r}
-### Fig. S8 ###
-data=read.csv("Supplementary Data of Fig. S6.csv",stringsAsFactors = FALSE,fileEncoding = 'GB18030')
+### Fig. S9 ###
+data=read.csv("Supplementary Data of Fig. S9.csv",stringsAsFactors = FALSE,fileEncoding = 'GB18030')
 
 data=data%>%
   filter(plant_nature!="")%>%
@@ -2030,42 +2334,43 @@ BBC$ID=factor(BBC$ID,levels=c("3 yr, newly-sedimentary tidal flat, Vietnam (20.7
                                  "3 yr, abandonded ponds, China (22.7°N)",
                                  "5 yr, abandonded ponds, India (20.4°N)"))
 
+### test of normality and homogeneity of model residuals
+ano=aov(ABC_mean~re_af,data=ABC)
 
-nom3 = bartlett.test(ABC$ABC_mean~ABC$re_af)
-nom3$p.value
-nom3$p.value>0.05
+plot(ano,1)
+leveneTest(ABC_mean~re_af,data=ABC)
 
-oneway3=aov(ABC$ABC_mean~ABC$re_af)
-anova(oneway3)
-library("agricolae")
-out3 = LSD.test(oneway3,"ABC$re_af",p.adj="none")
-mar3=out3$groups
-rownamemar3=row.names(mar3)
-newmar3=data.frame(rownamemar3,mar3[,1],mar3$groups)
-sort3=newmar3[order(newmar3$rownamemar3),]
-name=row.names(mar3)  
-mean3=out3$means[,1]
-sd3=out3$means[,2]
-marker3=sort3$mar3.groups
-plotdata3=data.frame(name,mean3,sd3,marker3)
+# normality of residuals
+plot(ano, 2)
+aov_residuals <- residuals(object = ano)
+shapiro.test(x = aov_residuals)
+## significant in the test of normality and homoscedasticity of model residuals
 
-P1=ggplot(plotdata3,aes(x=name,y=mean3))+
-          geom_jitter(data=ABC,aes(x=ABC$re_af,y=ABC$ABC_mean,size=ABC$Age,shape=ABC$ID),
+
+ABC_sum=ABC%>%group_by(re_af)%>%
+  summarise(average = mean(ABC_mean),
+                   std=sd(ABC_mean,na.rm = TRUE)/sqrt(length(ABC_mean)),
+                   median=median(ABC_mean))%>%ungroup()
+
+P1=ggplot(data=ABC,aes(x=re_af,y=ABC_mean))+
+  geom_jitter(data=ABC,aes(x=re_af,y=ABC_mean,size=Age,shape=ID),
                       color="grey",alpha=0.6,size=2,position = position_jitter(0.21))+
-          geom_point(aes(color=name),position=position_dodge(0.6),width=0.6,stat="identity",size=3)+
-          geom_errorbar(aes(ymin=mean3-sd3,ymax=mean3+sd3,color=name),
-                        position=position_dodge(0.6),width=0.2,lwd=0.4)+
-          geom_text(aes(x=name,y=30,color=name,label=marker3),
-                    size=3,position= position_dodge(0.6))+
-        # theme_bw()+
-      scale_shape_manual(values = c("4 yr, newly-sedimentary tidal flat, Vietnam (20.2°N)"=1,
+  stat_compare_means(size=2.5,aes(label = ..p.signif..),label.x=1.5,show.legend = F,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "P > 0.5")))+
+  stat_summary(aes(col = re_af), fun.data = "mean_se", geom = "errorbar", width=0.3)+
+  geom_point(data=ABC_sum,aes(x=re_af,y=average,color=re_af),
+             position=position_dodge(0.6),width=0.6,stat="identity",size=3)+
+  scale_shape_manual(values = c("4 yr, newly-sedimentary tidal flat, Vietnam (20.2°N)"=1,
                                  "5 yr, newly-sedimentary tidal flat, Vietnam (20.6°N)"=2,
                                  "6 yr, newly-sedimentary tidal flat, Vietnam (20.6°N)"=3,
                                  "3 yr, abandonded ponds, Vietnam (20.2°N)"=15,
                                  "3 yr, abandonded ponds, China (22.7°N)"=17,
                                  "5 yr, abandonded ponds, India (20.4°N)"=18))+
-      mytheme+
-    theme(
+  mytheme+
+  theme(
         axis.title.x=element_blank(),
         legend.title=element_blank(),
         legend.position = "bottom",
@@ -2078,51 +2383,52 @@ P1=ggplot(plotdata3,aes(x=name,y=mean3))+
                                 override.aes = list(size = c(2,2))))+
       ggtitle("Aboveground biomass carbon")
 
-nom3 = bartlett.test(BBC$BBC_mean~BBC$re_af)
-nom3$p.value
-    
-nom3$p.value>0.05
-oneway3=aov(BBC$BBC_mean~BBC$re_af)
-anova(oneway3)
-library("agricolae")
-out3 = LSD.test(oneway3,"BBC$re_af",p.adj="none")
-mar3=out3$groups
-rownamemar3=row.names(mar3)
-newmar3=data.frame(rownamemar3,mar3[,1],mar3$groups)
-sort3=newmar3[order(newmar3$rownamemar3),]
-    
-name=c("afforestation","reforestation")  
-mean3=out3$means[,1]
-sd3=out3$means[,2]
-marker3=sort3$mar3.groups
-plotdata3=data.frame(name,mean3,sd3,marker3)
+## BBC
+ano=aov(BBC_mean~re_af,data=BBC)
 
-P2=ggplot(plotdata3,aes(x=name,y=mean3))+
-          geom_jitter(data=BBC,aes(x=BBC$re_af,y=BBC$BBC_mean,size=BBC$Age,shape=BBC$ID),
+plot(ano,1)
+leveneTest(BBC_mean~re_af,data=BBC)
+
+# normality of residuals
+plot(ano, 2)
+aov_residuals <- residuals(object = ano)
+shapiro.test(x = aov_residuals)
+## significant in the test of normality and homoscedasticity of model residuals
+
+
+BBC_sum=BBC%>%group_by(re_af)%>%
+  summarise(average = mean(BBC_mean),
+                   std=sd(BBC_mean,na.rm = TRUE)/sqrt(length(BBC_mean)),
+                   median=median(BBC_mean))%>%ungroup()
+
+P2=ggplot(data=BBC,aes(x=re_af,y=BBC_mean))+
+  geom_jitter(data=BBC,aes(x=re_af,y=BBC_mean,size=Age,shape=ID),
                       color="grey",alpha=0.6,size=2,position = position_jitter(0.21))+
-          geom_point(aes(color=name),position=position_dodge(0.6),width=0.6,stat="identity",size=2)+
-          geom_errorbar(aes(ymin=mean3-sd3,ymax=mean3+sd3,color=name),
-                        position=position_dodge(0.6),width=0.2,lwd=0.4)+
-          geom_text(aes(x=name,y=2.8,color=name,label=marker3),
-                    size=3,position= position_dodge(0.6))+
-        theme_bw()+
-            scale_shape_manual(values = c( "3 yr, newly-sedimentary tidal flat, Vietnam (20.7°N)"=4,
+  stat_compare_means(size=2.5,aes(label = ..p.signif..),label.x=1.5,show.legend = F,
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
+                                        symbols = c("P ≤ 0.0001", "P ≤ 0.001", 
+                                                    "P ≤ 0.01", "P ≤ 0.05", 
+                                                    "P > 0.5")))+
+  stat_summary(aes(col = re_af), fun.data = "mean_se", geom = "errorbar", width=0.3)+
+  geom_point(data=BBC_sum,aes(x=re_af,y=average,color=re_af),
+             position=position_dodge(0.6),width=0.6,stat="identity",size=3)+
+  scale_shape_manual(values = c( "3 yr, newly-sedimentary tidal flat, Vietnam (20.7°N)"=4,
                                  "4 yr, newly-sedimentary tidal flat, Vietnam (20.2°N)"=1,
                                  "5 yr, newly-sedimentary tidal flat, Vietnam (20.7°N)"=5,
                                  "3 yr, abandonded ponds, Vietnam (20.2°N)"=15,
                                  "3 yr, abandonded ponds, China (22.7°N)"=17,
                                  "5 yr, abandonded ponds, India (20.4°N)"=18))+
-      guides(
-             shape = guide_legend(nrow = 5,
-                                title="Detailed site information",
-                                override.aes = list(size = c(5,5))))+
-      mytheme+
-    theme(axis.title.x=element_blank(), 
+  mytheme+
+  theme(axis.title.x=element_blank(),
         legend.title=element_blank(),
         legend.position = "bottom",
         panel.grid.major =element_blank(), 
         panel.grid.minor = element_blank())+
        ylab(expression(paste("Carbon density (Mg C ha"^-1*")")))+
+      guides(
+      shape = guide_legend(nrow = 3,
+                                title="Detailed site information",
+                                override.aes = list(size = c(2,2))))+
       ggtitle("Belowground biomass carbon")
     
 P3=ggplot(data,aes(x=Age,y=BC_mean,shape=ID))+
@@ -2161,12 +2467,14 @@ P4=as_ggplot(leg)+
         rect = element_rect(fill = "transparent")) 
 
 
-ggarrange(ggarrange(P1,P2,nrow=1,labels=c("a","b"),legend="none"),font.label=list(face="plain",family = "Helvetica",size=2),
-          P4,nrow=2,heights=c(2,1),labels="")
+ggarrange(ggarrange(P1,P2,nrow=1,labels=c("a","b"),legend="none",
+                    font.label=list(family = "Helvetica",size=7)),P4,
+          font.label=list(family = "Helvetica",size=2),
+          nrow=2,heights=c(2,1),labels="")
 
-ggsave("Fig.S8.png", 
+ggsave("Fig.S9.png", 
        path ="[please change it into your own path]",
-         width = 150,height = 90,units = c("mm"),dpi = 300)
+       width = 150,height = 90,units = c("mm"),dpi = 300)
 
 ```
 
@@ -2183,6 +2491,72 @@ cost_sum_eco=cost%>%group_by(re_af,Economy.type..developed.or.developing.)%>%
             n_cost=length(cost[!is.na(cost)]))
 
 ```
+
+```{r}
+### Fig. S7 ###
+price=read.csv("carbonprice.csv")
+world = ne_countries(scale = "medium", returnclass = "sf")
+world_price=merge(world,price,by.x="admin",by.y="country")
+
+onlyfrance=ne_countries(geounit = 'france', type = 'map_units',
+                        scale = "medium", returnclass = "sf")
+
+p9=ggplot(data = world_price) +
+    geom_sf(data=world,color = "#EEEEEE", fill = "#E3E3E3",lwd=0.3)+
+    geom_sf(aes(fill = Com),alpha=0.8,lwd=0.3) +
+    geom_sf(data=onlyfrance,color="#EEEEEE",fill="#E3E3E3",lwd=0.3)+
+    scale_fill_gradient2(low="#F3CABE",mid="#9B4C35", high="#692410", midpoint = 100, space ="Lab",na.value="white")+
+  mytheme+
+    theme(
+        panel.grid.major =element_blank(), 
+        panel.grid.minor = element_blank(),
+        legend.background = element_blank(),
+        legend.key.width = unit(1.2, "cm"),
+        legend.key.height = unit(5,"mm"),
+        legend.direction = "horizontal",
+        legend.position = "bottom")+
+  scale_x_continuous(expand = c(0,0))+
+  scale_y_continuous(expand = c(0,0),limits = c(-48,55))+
+    xlab("Longitude")+
+    ylab("Latitude")+
+  ggtitle("Total implementation and opportunity cost per megagram of carbon dioxide equivalent mitigated")+
+  labs(fill=expression(atop("Mitigation cost",
+                                             atop(textstyle(("$ Mg CO"[2]*"-eq"^-1))))))
+
+p1=ggplot(data = world_price) +
+    geom_sf(data=world,color = "#EEEEEE", fill = "#E3E3E3",lwd=0.3)+
+    geom_sf(aes(fill = NPC),alpha=0.8,lwd=0.3) +
+    geom_sf(data=onlyfrance,color="#EEEEEE",fill="#E3E3E3",lwd=0.3)+
+  # scale_fill_viridis_b(n.breaks = 10)+
+    scale_fill_gradient2(low="#F3CABE",mid="#9B4C35", high="#692410", midpoint = 100, space ="Lab",na.value="white")+
+  mytheme+
+    theme(
+        panel.grid.major =element_blank(), 
+        panel.grid.minor = element_blank(),
+        legend.background = element_blank(),
+        legend.key.width = unit(1.2, "cm"),
+        legend.key.height = unit(5,"mm"),
+        legend.direction = "horizontal",
+        legend.position = "bottom")+
+  scale_x_continuous(expand = c(0,0))+
+  scale_y_continuous(expand = c(0,0),limits = c(-48,55))+
+    xlab("Longitude")+
+    ylab("Latitude")+
+  ggtitle("Implementation cost per megagram of carbon dioxide equivalent mitigated")+
+  labs(fill=expression(atop("Mitigation cost",
+                                             atop(textstyle(("$ Mg CO"[2]*"-eq"^-1))))))
+  
+
+ggarrange(p1,p9, ncol = 1, nrow =2 ,labels="auto",font.label=list(face="plain",family = "Helvetica",size=7,face="bold"),
+             legend ="bottom",common.legend = T)
+
+ggsave(path = "[please change it into your own path]",
+       filename="Fig.S7.png",
+       width = 130, height = 150, units = "mm",dpi=300)
+
+```
+
+
 
 
 
